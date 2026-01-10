@@ -18,14 +18,9 @@ import {
  */
 export class FileResourceHandler extends ResourceHandlerBase {
   private readonly resourceEndpoints = {
-    upload: "disk.storage.uploadfile",
     uploadToEntity: {
-      contact: "crm.contact.update.file",
-      company: "crm.company.update.file",
-      deal: "crm.deal.update.file",
-      lead: "crm.lead.update.file",
-      task: "tasks.task.update.file",
-      chat: "im.disk.file.upload",
+      "disk": "disk.storage.uploadfile",
+      "folder": "disk.folder.uploadfile",
     },
     get: "disk.file.get",
     list: "disk.file.list",
@@ -114,30 +109,20 @@ export class FileResourceHandler extends ResourceHandlerBase {
    * Xử lý 'upload'
    */
   private async handleUpload(itemIndex: number): Promise<void> {
-    const binaryPropertyName = this.getNodeParameter(
-      "binaryPropertyName",
+    const fileName = this.getNodeParameter(
+      "fileName",
       itemIndex
     ) as string;
-    const entityType = this.getNodeParameter("entityType", itemIndex) as string;
 
-    // Kiểm tra tồn tại dữ liệu nhị phân
-    validateBinaryDataExists(
-      this.executeFunctions.helpers,
-      this.items[itemIndex],
-      binaryPropertyName
-    );
+    const entityType = this.getNodeParameter(
+      "entityType",
+      itemIndex
+    ) as string;
 
-    // Lấy nội dung file
-    const binaryData = this.items[itemIndex].binary as IBinaryKeyData;
-    const binaryContent =
-      await this.executeFunctions.helpers.getBinaryDataBuffer(
-        itemIndex,
-        binaryPropertyName
-      );
-
-    // Xác định endpoint dựa trên loại entity
-    let endpoint = "";
-    let formData: IDataObject = {};
+    const fileContentData = this.getNodeParameter(
+      "fileContent",
+      itemIndex
+    ) as string;
 
     // Lấy options nếu có
     const options = this.getNodeParameter(
@@ -146,40 +131,50 @@ export class FileResourceHandler extends ResourceHandlerBase {
       {}
     ) as IDataObject;
 
-    if (entityType === "disk") {
-      // Upload lên disk storage
-      const folderId = this.getNodeParameter("folderId", itemIndex) as string;
-      endpoint = this.resourceEndpoints.upload;
-      formData = {
-        id: folderId,
-      };
-    } else {
-      // Upload cho một entity cụ thể
-      const entityId = this.getNodeParameter("entityId", itemIndex) as string;
+    // Upload lên disk storage
+    const entityId = this.getNodeParameter("entityId", itemIndex) as string;
+    const endpoint = this.resourceEndpoints.uploadToEntity[entityType as "disk" | "folder"];
 
-      if (!this.resourceEndpoints.uploadToEntity[entityType]) {
-        throw new Error(`Không hỗ trợ loại entity: ${entityType}`);
-      }
+    // Chuẩn bị request body theo format của Bitrix24 API
+    // Format: { id, data: { NAME }, fileContent, ...otherParams }
+    const requestBody: IDataObject = {
+      id: entityId,
+      data: {
+        NAME: fileName,
+      },
+      fileContent: fileContentData
+    };
 
-      endpoint = this.resourceEndpoints.uploadToEntity[entityType];
-      formData = {
-        ID: entityId,
-        ELEMENT_ID: entityId,
-      };
+    // Thêm các tham số tùy chọn từ options
+    if (options.generateUniqueName !== undefined) {
+      requestBody.generateUniqueName = options.generateUniqueName;
     }
 
-    // Thiết lập form data cho upload file
-    formData.NAME = binaryData[binaryPropertyName].fileName || "file";
-    formData.CONTENT = binaryContent;
+    if (options.rights) {
+      try {
+        requestBody.rights =
+          typeof options.rights === "string"
+            ? this.parseJsonParameter(
+                options.rights as string,
+                "Rights phải là JSON hợp lệ",
+                itemIndex
+              )
+            : options.rights;
+      } catch (error) {
+        // Ignore invalid JSON, sẽ được xử lý bởi parseJsonParameter
+      }
+    }
 
-    // Thêm custom parameters nếu có
-    this.processCustomParameters(options, formData, itemIndex);
+    // Thêm custom parameters nếu có (trừ các tham số đã xử lý ở trên)
+    const customOptions = { ...options };
+    delete customOptions.generateUniqueName;
+    delete customOptions.rights;
+    this.processCustomParameters(customOptions, requestBody, itemIndex);
 
-    // Gọi API
     const responseData = await this.makeApiCall(
       endpoint,
+      requestBody,
       {},
-      formData,
       itemIndex
     );
     this.addResponseToReturnData(responseData, itemIndex);

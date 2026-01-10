@@ -20,6 +20,42 @@ const fileIdField: INodeProperties = {
   },
 };
 
+// Entity Type Field
+const entityTypeField: INodeProperties = {
+  displayName: "Entity Type",
+  name: "entityType",
+  type: "options",
+  options: [
+    { name: "Disk", value: "disk" },
+    { name: "Folder", value: "folder" },
+  ],
+  default: "disk",
+  required: true,
+  description: "Type of the entity to upload the file to",
+  displayOptions: {
+    show: {
+      resource: ["file"],
+      operation: ["upload"],
+    },
+  },
+};
+
+// Folder ID Field
+const entityIdField: INodeProperties = {
+  displayName: "Entity ID",
+  name: "entityId",
+  type: "string",
+  required: true,
+  default: "",
+  description: "ID of the entity (folder or disk)",
+  displayOptions: {
+    show: {
+      resource: ["file"],
+      operation: ["upload"],
+    },
+  },
+};
+
 // Folder ID Field
 const folderIdField: INodeProperties = {
   displayName: "Folder ID",
@@ -30,7 +66,7 @@ const folderIdField: INodeProperties = {
   displayOptions: {
     show: {
       resource: ["file"],
-      operation: ["upload", "getAll", "move", "copy"],
+      operation: ["getAll", "move", "copy"],
     },
   },
 };
@@ -71,6 +107,8 @@ const fileContentField: INodeProperties = {
 
 // Upload operation fields
 const uploadFields: INodeProperties[] = [
+  entityTypeField,
+  entityIdField,
   {
     displayName: "Options",
     name: "uploadOptions",
