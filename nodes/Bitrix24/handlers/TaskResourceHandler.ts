@@ -127,6 +127,20 @@ export class TaskResourceHandler extends ResourceHandlerBase {
       {}
     ) as IDataObject;
 
+    // Format attached file ids
+    if (fields.UF_TASK_WEBDAV_FILES) {
+      let attachedFileIds: string[];
+      try {
+        attachedFileIds = JSON.parse(fields.UF_TASK_WEBDAV_FILES as string);
+      } catch (error) {
+        throw new NodeOperationError(
+          this.executeFunctions.getNode(),
+          "Attached file IDs must be a valid JSON list of ids",
+        );
+      }
+      fields.UF_TASK_WEBDAV_FILES = attachedFileIds.map((id: string) => `n${id}`);;
+    }
+
     const requestParams: IDataObject = { fields };
     this.processCustomParameters(options, requestParams, itemIndex);
 

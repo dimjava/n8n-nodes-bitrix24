@@ -218,6 +218,13 @@ const fieldsCollection: INodeProperties = {
       default: "",
       description: "Planned end date for the task",
     },
+    {
+      displayName: "Attached file IDs",
+      name: "UF_TASK_WEBDAV_FILES",
+      type: "json",
+      default: "[]",
+      description: "IDs of the files to attach to the task",
+    }
   ],
 };
 
