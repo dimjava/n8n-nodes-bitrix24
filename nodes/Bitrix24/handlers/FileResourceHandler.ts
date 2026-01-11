@@ -23,7 +23,7 @@ export class FileResourceHandler extends ResourceHandlerBase {
       "folder": "disk.folder.uploadfile",
     },
     get: "disk.file.get",
-    list: "disk.file.list",
+    list: "disk.folder.getchildren",
     delete: "disk.file.delete",
   };
 
@@ -249,52 +249,41 @@ export class FileResourceHandler extends ResourceHandlerBase {
    * Xử lý 'getAll'
    */
   private async handleGetAll(itemIndex: number): Promise<void> {
+    const folderId = this.getNodeParameter("folderId", itemIndex) as string;
     const returnAll = this.getNodeParameter("returnAll", itemIndex) as boolean;
-    const options = this.getNodeParameter(
-      "options",
+    const filter = this.getNodeParameter(
+      "filter",
       itemIndex,
       {}
     ) as IDataObject;
 
     // Xây dựng tham số lọc
-    const queryParams: IDataObject = {};
+    const requestBody: IDataObject = {
+      id: folderId,
+    };
 
-    if (options.entityType && options.entityId) {
-      const entityId = options.entityId;
-
-      switch (options.entityType as string) {
-        case "contact":
-          queryParams.filter = { CONTACT_ID: entityId };
-          break;
-        case "company":
-          queryParams.filter = { COMPANY_ID: entityId };
-          break;
-        case "deal":
-          queryParams.filter = { DEAL_ID: entityId };
-          break;
-        case "lead":
-          queryParams.filter = { LEAD_ID: entityId };
-          break;
-        case "task":
-          queryParams.filter = { TASK_ID: entityId };
-          break;
-        case "disk":
-          queryParams.filter = { FOLDER_ID: entityId };
-          break;
+    if (filter) {
+      try {
+        requestBody.filter =
+          typeof filter === "string"
+            ? this.parseJsonParameter(filter as string, "Filter must be a valid JSON", itemIndex)
+            : filter;
+      } catch (error) {
+        throw new NodeOperationError(
+          this.executeFunctions.getNode(),
+          "Filter must be a valid JSON",
+          { itemIndex }
+        );
       }
     }
 
-    if (options.order) {
-      queryParams.order = { DATE_CREATE: options.order };
-    }
-
     // Thêm custom parameters nếu có
-    this.processCustomParameters(options, queryParams, itemIndex);
+    // this.processCustomParameters(filters, requestBody, itemIndex);
 
     const responseData = await this.makeApiCall(
       this.resourceEndpoints.list,
+      requestBody,
       {},
-      queryParams,
       itemIndex,
       returnAll
     );

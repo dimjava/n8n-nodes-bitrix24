@@ -105,6 +105,34 @@ const fileContentField: INodeProperties = {
   },
 };
 
+const returnAllField: INodeProperties = {
+  displayName: "Return All",
+  name: "returnAll",
+  type: "boolean",
+  default: false,
+  description: "Whether to return all results or only up to a given limit",
+  displayOptions: {
+    show: {
+      resource: ["file"],
+      operation: ["getAll"],
+    },
+  },
+};
+
+const filterField: INodeProperties = {
+  displayName: "Filter",
+  name: "filter",
+  type: "json",
+  default: "{}",
+  description: "Filter criteria in JSON format",
+  displayOptions: {
+    show: {
+      resource: ["file"],
+      operation: ["getAll"],
+    },
+  },
+};
+
 // Upload operation fields
 const uploadFields: INodeProperties[] = [
   entityTypeField,
@@ -153,47 +181,8 @@ const getAllFields: INodeProperties[] = [
   fileIdField,
   fileNameField,
   fileContentField,
-  {
-    displayName: "Filter",
-    name: "filter",
-    type: "collection",
-    placeholder: "Add Filter",
-    default: {},
-    displayOptions: {
-      show: {
-        resource: ["file"],
-        operation: ["getAll"],
-      },
-    },
-    options: [
-      {
-        displayName: "File Type",
-        name: "type",
-        type: "options",
-        options: [
-          { name: "All", value: "" },
-          { name: "File", value: "file" },
-          { name: "Folder", value: "folder" },
-        ],
-        default: "",
-        description: "Filter by file type",
-      },
-      {
-        displayName: "Name Contains",
-        name: "nameContains",
-        type: "string",
-        default: "",
-        description: "Filter by files containing this text in name",
-      },
-      {
-        displayName: "Access Token",
-        name: "accessToken",
-        type: "string",
-        default: "",
-        description: "Access token for authentication",
-      },
-    ],
-  },
+  returnAllField,
+  filterField,
   {
     displayName: "Options",
     name: "options",
@@ -278,7 +267,7 @@ const operationField: INodeProperties = {
     {
       name: "Get All Files",
       value: "getAll",
-      description: "Get all files (disk.file.list)",
+      description: "Get all files (disk.folder.getchildren)",
       action: "Get all files",
     },
     {
