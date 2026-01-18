@@ -126,6 +126,13 @@ const fieldsCollection: INodeProperties = {
       description: "ID of the user responsible for the task",
     },
     {
+      "displayName": "Auditors",
+      "name": "AUDITORS",
+      "type": "json",
+      "default": "[]",
+      "description": "IDs of the users to audit the task in JSON format",
+    },
+    {
       displayName: "Deadline",
       name: "DEADLINE",
       type: "dateTime",
