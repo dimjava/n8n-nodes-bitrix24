@@ -141,6 +141,20 @@ export class TaskResourceHandler extends ResourceHandlerBase {
       fields.UF_TASK_WEBDAV_FILES = attachedFileIds.map((id: string) => `n${id}`);;
     }
 
+    if (fields.AUDITORS) {
+      // parse auditors from array of strings to array of numbers
+      let auditors: number[];
+      try {
+        auditors = JSON.parse(fields.AUDITORS as string).map((id: string) => parseInt(id, 10));
+      } catch (error) {
+        throw new NodeOperationError(
+          this.executeFunctions.getNode(),
+          "Auditors must be a valid JSON list of ids",
+        );
+      }
+      fields.AUDITORS = auditors;
+    }
+
     const requestParams: IDataObject = { fields };
     this.processCustomParameters(options, requestParams, itemIndex);
 
